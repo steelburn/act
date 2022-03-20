@@ -62,7 +62,7 @@ jobs:
         - uses: actions/checkout@v3
           with:
             fetch-depth: 2
-        - run: echo "DOCKER_HOST=$(podman system info -f '{{ .Host.RemoteSocket.Path }}')" >> $GITHUB_ENV
+        - run: echo "DOCKER_HOST=unix://$(podman system info -f '{{ .Host.RemoteSocket.Path }}')" >> $GITHUB_ENV
         - name: Set up QEMU
           uses: docker/setup-qemu-action@v1
         - uses: actions/setup-go@v2
