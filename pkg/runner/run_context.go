@@ -10,15 +10,14 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/google/shlex"
+	"github.com/kballard/go-shellquote"
+	"github.com/mitchellh/go-homedir"
+	selinux "github.com/opencontainers/selinux/go-selinux"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
-	"github.com/mitchellh/go-homedir"
-	log "github.com/sirupsen/logrus"
-
-	selinux "github.com/opencontainers/selinux/go-selinux"
-
 	"github.com/nektos/act/pkg/common"
+	"github.com/nektos/act/pkg/common/git"
 	"github.com/nektos/act/pkg/container"
 	"github.com/nektos/act/pkg/model"
 )
@@ -366,7 +365,7 @@ func (rc *RunContext) hostname() string {
 
 	optionsFlags := pflag.NewFlagSet("container_options", pflag.ContinueOnError)
 	hostname := optionsFlags.StringP("hostname", "h", "", "")
-	optionsArgs, err := shlex.Split(c.Options)
+	optionsArgs, err := shellquote.Split(c.Options)
 	if err != nil {
 		log.Warnf("Cannot parse container options: %s", c.Options)
 		return ""
@@ -510,7 +509,7 @@ func (rc *RunContext) getGithubContext() *model.GithubContext {
 	}
 
 	repoPath := rc.Config.Workdir
-	repo, err := common.FindGithubRepo(repoPath, rc.Config.GitHubInstance)
+	repo, err := git.FindGithubRepo(repoPath, rc.Config.GitHubInstance)
 	if err != nil {
 		log.Warningf("unable to get git repo: %v", err)
 	} else {

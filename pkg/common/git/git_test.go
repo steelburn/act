@@ -1,4 +1,4 @@
-package common
+package git
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func TestFindGitSlug(t *testing.T) {
 func testDir(t *testing.T) string {
 	basedir, err := ioutil.TempDir("", "act-test")
 	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(basedir) })
+	t.Cleanup(func() { _ = os.RemoveAll(basedir) })
 	return basedir
 }
 
@@ -173,25 +173,26 @@ func TestGitFindRef(t *testing.T) {
 
 func TestGitCloneExecutor(t *testing.T) {
 	for name, tt := range map[string]struct {
-		Err, URL, Ref string
+		Err      error
+		URL, Ref string
 	}{
 		"tag": {
-			Err: "",
+			Err: nil,
 			URL: "https://github.com/actions/checkout",
 			Ref: "v2",
 		},
 		"branch": {
-			Err: "",
+			Err: nil,
 			URL: "https://github.com/anchore/scan-action",
 			Ref: "act-fails",
 		},
 		"sha": {
-			Err: "",
+			Err: nil,
 			URL: "https://github.com/actions/checkout",
 			Ref: "5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f", // v2
 		},
 		"short-sha": {
-			Err: "short SHA references are not supported: 5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f",
+			Err: &Error{ErrShortRef, "5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f"},
 			URL: "https://github.com/actions/checkout",
 			Ref: "5a4ac90", // v2
 		},
@@ -204,10 +205,11 @@ func TestGitCloneExecutor(t *testing.T) {
 			})
 
 			err := clone(context.Background())
-			if tt.Err == "" {
-				assert.Empty(t, err)
+			if tt.Err != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.Err, err)
 			} else {
-				assert.EqualError(t, err, tt.Err)
+				assert.Empty(t, err)
 			}
 		})
 	}
